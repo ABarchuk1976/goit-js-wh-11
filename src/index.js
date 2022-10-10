@@ -151,6 +151,11 @@ formRef.addEventListener('submit', event => {
 
       Notiflix.Notify.success(`Hooray! We found ${totalAmount} images.`);
 
+      if (totalAmount < 41) {
+        Notiflix.Notify.info("We're sorry, but you've reached the end of search results.");
+        searchEnded = true;
+      }
+
       pagesCount = Math.trunc(totalAmount / PER_PAGE);
       if (totalAmount % PER_PAGE !== 0) pagesCount += 1;
 
