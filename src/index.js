@@ -1,4 +1,4 @@
-import SimpleLightbox from 'simplelightbox/dist/simple-lightbox';
+import SimpleLightbox from 'simplelightbox/src/simple-lightbox.js';
 import 'simplelightbox/dist/simple-lightbox.min.css';
 
 const axios = require('axios').default;
@@ -53,17 +53,12 @@ async function getGallery() {
       per_page: PER_PAGE,
     });
 
-    console.log(`${API}?${searchParams}`);
-
     const response = await axios.get(`${API}?${searchParams}`);
 
     console.log(response.status);
 
     if (response.status !== 200) {
       throw new Error(response.status);
-    }
-    if (response.data.hits.length === 0) {
-      throw new Error('Sorry, there are no images matching your search query. Please try again.');
     }
     return response.data;
   } catch (error) {
@@ -77,40 +72,52 @@ function normalizedQuery(symbol) {
 }
 
 function renderImages(images) {
-  let markup = '';
+  let galleryMarkup = '';
 
-  console.log('Tags: ');
-  markup = images
+  galleryMarkup = [...images]
     .map(
-      img => `
-	<a class="photo-card">
-  <img src="${img.webformatURL}" alt='${img.tags
+      ({
+        largeImageURL,
+        webformatURL,
+        tags,
+        likes,
+        views,
+        comments,
+        downloads,
+      }) => `<a class="gallery__item" href=${largeImageURL}>
+  <img class="gallery__img" src="${webformatURL}" alt="${tags
         .split(', ')
-        .join(' ')}" loading="lazy" class="photo-img" />
+        .join(' ')}" loading="lazy" />
   <div class="info">
-    <p class="info-item">
+    <p class="info__item">
       <b>Likes</b>
-      ${img.likes}
+      ${likes}
     </p>
-    <p class="info-item">
+    <p class="info__item">
       <b>Views</b>
-      <span>${img.views}</span>
+      ${views}
     </p>
-    <p class="info-item">
+    <p class="info__item">
       <b>Comments</b>
-      <span>${img.comments}</span>
+      ${comments}
     </p>
-    <p class="info-item">
+    <p class="info__item">
       <b>Downloads</b>
-      <span>${img.downloads}</span>
+      ${downloads}
     </p>
   </div>
-	</a>
-	`
+	</a>`
     )
     .join('');
-  galleryRef.insertAdjacentHTML('beforeend', markup);
+
+  galleryRef.insertAdjacentHTML('beforeend', galleryMarkup);
+
+  let lightbox = new SimpleLightbox('.gallery__item', { captionsData: 'alt', captionDelay: 100 });
 }
+
+galleryRef.addEventListener('click', event => {
+  event.preventDefault();
+});
 
 searchQuery.addEventListener('input', event => {
   normalizedQuery(event.data);
@@ -119,13 +126,25 @@ searchQuery.addEventListener('input', event => {
 formRef.addEventListener('submit', event => {
   event.preventDefault();
 
+  galleryRef.innerHTML = '';
+
   pagesCount = 1;
   currentPage = 1;
 
-  getGallery().then(images => {
-    console.log(images);
-    let pagesCount = Math.trunc(images.totalHits / PER_PAGE);
-    pagesCount = images.totalHits % PER_PAGE === 0 ? pagesCount : pagesCount + 1;
-    renderImages(images.hits);
-  });
+  getGallery()
+    .then(images => {
+      if (images.hits.length === 0) {
+        throw new Error('Sorry, there are no images matching your search query. Please try again.');
+      }
+
+      let pagesCount = Math.trunc(images.totalHits / PER_PAGE);
+      pagesCount = images.totalHits % PER_PAGE === 0 ? pagesCount : pagesCount + 1;
+
+      console.log('Pages count: ', pagesCount);
+
+      renderImages(images.hits);
+    })
+    .catch(error => {
+      Notiflix.Notify.failure(error.message);
+    });
 });
