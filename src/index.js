@@ -1,6 +1,6 @@
-import SimpleLightbox from 'simplelightbox/src/simple-lightbox.js';
+import SimpleLightbox from 'simplelightbox';
 import 'simplelightbox/dist/simple-lightbox.min.css';
-
+const _ = require('lodash');
 const axios = require('axios').default;
 
 import Notiflix from 'notiflix';
@@ -16,13 +16,16 @@ const ORIENTATION = 'horizontal';
 const SAFESEARCH = true;
 const API = 'https://pixabay.com/api/';
 const PER_PAGE = 40;
-const BODY_PADDING = 8;
-const GRID_MARGIN = 10;
 
 let currentPage = 1;
 let pagesCount = 1;
+let searchEnded = false;
 
 const galleryRef = document.querySelector('.gallery');
+const lightbox = new SimpleLightbox('.gallery__item', {
+  captionsData: 'alt',
+  captionDelay: 100,
+});
 const formRef = document.querySelector('#search-form');
 const {
   elements: { searchQuery },
@@ -40,6 +43,13 @@ btnRef.style.width = '36px';
 btnRef.style.border = 'none';
 btnRef.style.borderRadius = '0 4px 4px 0';
 btnRef.style.cursor = 'pointer';
+btnRef.addEventListener('mouseenter', () => {
+  btnRef.style.backgroundColor = '#D1D1D1';
+});
+
+btnRef.addEventListener('mouseleave', () => {
+  btnRef.style.backgroundColor = '#EFEFEF';
+});
 
 async function getGallery() {
   try {
@@ -111,8 +121,7 @@ function renderImages(images) {
     .join('');
 
   galleryRef.insertAdjacentHTML('beforeend', galleryMarkup);
-
-  let lightbox = new SimpleLightbox('.gallery__item', { captionsData: 'alt', captionDelay: 100 });
+  lightbox.refresh();
 }
 
 galleryRef.addEventListener('click', event => {
@@ -130,21 +139,61 @@ formRef.addEventListener('submit', event => {
 
   pagesCount = 1;
   currentPage = 1;
+  searchEnded = false;
 
   getGallery()
-    .then(images => {
-      if (images.hits.length === 0) {
+    .then(response => {
+      const { hits: images, totalHits: totalAmount } = response;
+      if (images.length === 0) {
+        searchEnded = true;
         throw new Error('Sorry, there are no images matching your search query. Please try again.');
       }
 
-      let pagesCount = Math.trunc(images.totalHits / PER_PAGE);
-      pagesCount = images.totalHits % PER_PAGE === 0 ? pagesCount : pagesCount + 1;
+      Notiflix.Notify.success(`Hooray! We found ${totalAmount} images.`);
+
+      pagesCount = Math.trunc(totalAmount / PER_PAGE);
+      if (totalAmount % PER_PAGE !== 0) pagesCount += 1;
 
       console.log('Pages count: ', pagesCount);
 
-      renderImages(images.hits);
+      renderImages(images);
     })
     .catch(error => {
       Notiflix.Notify.failure(error.message);
     });
 });
+
+document.addEventListener(
+  'scroll',
+  _.debounce(() => {
+    const { height: cardHeight } = galleryRef.firstElementChild.getBoundingClientRect();
+
+    window.scrollBy({
+      top: cardHeight * 2,
+      behavior: 'smooth',
+    });
+  }),
+  300
+);
+
+window.addEventListener(
+  'scroll',
+  _.debounce(event => {
+    const hundredPxToBottom = document.documentElement.clientHeight + 100;
+    const toBottomOfDoc = event.target.documentElement.getBoundingClientRect().bottom;
+
+    if (toBottomOfDoc < hundredPxToBottom) {
+      if (pagesCount === currentPage && !searchEnded) {
+        Notiflix.Notify.info("We're sorry, but you've reached the end of search results.");
+        searchEnded = true;
+        return;
+      }
+
+      currentPage += 1;
+
+      getGallery().then(response => {
+        renderImages(response.hits);
+      });
+    }
+  }, 300)
+);
