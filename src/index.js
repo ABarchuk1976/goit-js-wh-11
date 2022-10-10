@@ -7,7 +7,6 @@ import Notiflix from 'notiflix';
 Notiflix.Notify.init({
   position: 'right-top',
   fontSize: '16px',
-  // useIcon: false,
 });
 import 'notiflix/dist/notiflix-3.2.5.min.css';
 
@@ -23,6 +22,7 @@ const GRID_MARGIN = 10;
 let currentPage = 1;
 let pagesCount = 1;
 
+const galleryRef = document.querySelector('.gallery');
 const formRef = document.querySelector('#search-form');
 const {
   elements: { searchQuery },
@@ -78,17 +78,19 @@ function normalizedQuery(symbol) {
 
 function renderImages(images) {
   let markup = '';
-  const galleryRef = document.querySelector('.gallery');
 
+  console.log('Tags: ');
   markup = images
     .map(
       img => `
 	<a class="photo-card">
-  <img src=${img.webformatURL} alt=${img.tags} loading="lazy" />
+  <img src="${img.webformatURL}" alt='${img.tags
+        .split(', ')
+        .join(' ')}" loading="lazy" class="photo-img" />
   <div class="info">
     <p class="info-item">
       <b>Likes</b>
-      <span>${img.likes}</span>
+      ${img.likes}
     </p>
     <p class="info-item">
       <b>Views</b>
@@ -103,7 +105,7 @@ function renderImages(images) {
       <span>${img.downloads}</span>
     </p>
   </div>
-</a>
+	</a>
 	`
     )
     .join('');
