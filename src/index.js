@@ -46,13 +46,43 @@ btnRef.style.width = '36px';
 btnRef.style.border = 'none';
 btnRef.style.borderRadius = '0 4px 4px 0';
 btnRef.style.cursor = 'pointer';
-// btnRef.addEventListener('mouseenter', () => {
-//   btnRef.style.backgroundColor = '#D1D1D1';
-// });
+btnRef.addEventListener('mouseenter', () => {
+  btnRef.style.backgroundColor = '#D1D1D1';
+});
 
-// btnRef.addEventListener('mouseleave', () => {
-//   btnRef.style.backgroundColor = '#EFEFEF';
-// });
+btnRef.addEventListener('mouseleave', () => {
+  btnRef.style.backgroundColor = '#EFEFEF';
+});
+
+const debouncedScroll = _.debounce(() => {
+  const { height: cardHeight } = galleryRef.firstChild.getBoundingClientRect();
+
+  window.scrollBy({
+    top: cardHeight * 2,
+    behavior: 'smooth',
+  });
+}, 1500);
+
+function chackBottom(pxToBottom) {
+  const toBottom = document.documentElement.clientHeight + pxToBottom;
+  const toBottomOfDoc = document.documentElement.getBoundingClientRect().bottom;
+
+  console.log(
+    'toBottom ',
+    toBottom,
+    ' toBottomOfDoc ',
+    toBottomOfDoc,
+    ' pagesCount ',
+    pagesCount,
+    ' currentPage ',
+    currentPage
+  );
+  if (toBottomOfDoc < toBottom && !searchEnded) {
+    return true;
+  }
+
+  return false;
+}
 
 async function getGallery() {
   try {
@@ -71,15 +101,6 @@ async function getGallery() {
     if (response.status !== 200) {
       throw new Error(response.status);
     }
-    const data = response.data;
-
-    const { hits: images, totalHits: totalAmount } = data;
-    if (images.length === 0) {
-      searchEnded = true;
-      throw new Error('Sorry, there are no images matching your search query. Please try again.');
-    }
-
-    Notiflix.Notify.success(`Hooray! We found ${totalAmount} images.`);
 
     return response.data;
   } catch (error) {
@@ -152,6 +173,7 @@ formRef.addEventListener('submit', event => {
   pagesCount = 1;
   currentPage = 1;
   searchEnded = false;
+  document.removeEventListener('scroll', debouncedScroll);
 
   getGallery()
     .then(response => {
@@ -167,25 +189,8 @@ formRef.addEventListener('submit', event => {
       if (totalAmount % PER_PAGE !== 0) pagesCount += 1;
 
       renderImages(images);
-    })
-    .then(() => {
-      const galleryItemRef = document.querySelector('.gallery__item');
 
-      console.log(
-        document.body.clientHeight,
-        ' ',
-        'pages ',
-        pagesCount,
-        ' ',
-        galleryItemRef.clientHeight * pagesCount + UP_TO_GALLERY,
-        ' ',
-        document.documentElement.clientHeight
-      );
-
-      if (
-        galleryItemRef.clientHeight * pagesCount + UP_TO_GALLERY <
-        document.documentElement.clientHeight
-      ) {
+      if (chackBottom(0) && pagesCount === currentPage) {
         Notiflix.Notify.info("We're sorry, but you've reached the end of search results.");
         searchEnded = true;
       }
@@ -195,37 +200,23 @@ formRef.addEventListener('submit', event => {
     });
 });
 
+window.addEventListener('scroll', debouncedScroll);
+
 document.addEventListener(
   'scroll',
-  _.debounce(() => {
-    const { height: cardHeight } = galleryRef.firstElementChild.getBoundingClientRect();
-
-    window.scrollBy({
-      top: cardHeight * 2,
-      behavior: 'smooth',
-    });
-  }),
-  300
-);
-
-window.addEventListener(
-  'scroll',
   _.debounce(event => {
-    const hundredPxToBottom = document.documentElement.clientHeight + 100;
-    const toBottomOfDoc = event.target.documentElement.getBoundingClientRect().bottom;
+    if (!chackBottom(100)) return;
 
-    if (toBottomOfDoc < hundredPxToBottom && !searchEnded) {
-      if (pagesCount === currentPage) {
-        Notiflix.Notify.info("We're sorry, but you've reached the end of search results.");
-        searchEnded = true;
-        return;
-      }
-
+    if (pagesCount !== currentPage) {
       currentPage += 1;
 
       getGallery().then(response => {
         renderImages(response.hits);
       });
+      return;
     }
-  }, 300)
+
+    Notiflix.Notify.info("We're sorry, but you've reached the end of search results.");
+    searchEnded = true;
+  }, 500)
 );
