@@ -43,13 +43,13 @@ btnRef.style.width = '36px';
 btnRef.style.border = 'none';
 btnRef.style.borderRadius = '0 4px 4px 0';
 btnRef.style.cursor = 'pointer';
-btnRef.addEventListener('mouseenter', () => {
-  btnRef.style.backgroundColor = '#D1D1D1';
-});
+// btnRef.addEventListener('mouseenter', () => {
+//   btnRef.style.backgroundColor = '#D1D1D1';
+// });
 
-btnRef.addEventListener('mouseleave', () => {
-  btnRef.style.backgroundColor = '#EFEFEF';
-});
+// btnRef.addEventListener('mouseleave', () => {
+//   btnRef.style.backgroundColor = '#EFEFEF';
+// });
 
 async function getGallery() {
   try {
@@ -133,7 +133,7 @@ searchQuery.addEventListener('input', event => {
 formRef.addEventListener('submit', event => {
   event.preventDefault();
 
-  galleryRef.innerHTML = '';
+  galleryRef.setHTML('');
 
   pagesCount = 1;
   currentPage = 1;
@@ -149,22 +149,19 @@ formRef.addEventListener('submit', event => {
 
       Notiflix.Notify.success(`Hooray! We found ${totalAmount} images.`);
 
-      console.log(
-        'Scroll ',
-        document.documentElement.scrollTop,
-        ' ',
-        document.documentElement.scrollLeft
-      );
-
-      if (document.body.clientHeight <= document.documentElement.clientHeight) {
-        Notiflix.Notify.info("We're sorry, but you've reached the end of search results.");
-        searchEnded = true;
-      }
-
       pagesCount = Math.trunc(totalAmount / PER_PAGE);
       if (totalAmount % PER_PAGE !== 0) pagesCount += 1;
 
       renderImages(images);
+
+      document.body.refresh;
+
+      console.log(document.body.offsetHeight);
+
+      if (document.documentElement.clientWidth > document.body.clientHeight) {
+        Notiflix.Notify.info("We're sorry, but you've reached the end of search results.");
+        searchEnded = true;
+      }
     })
     .catch(error => {
       Notiflix.Notify.failure(error.message);

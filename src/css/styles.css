@@ -20,7 +20,8 @@ body {
   background-color: #fafafa;
   color: #212121;
   line-height: 1.5;
-  padding: 8px;
+  margin: 0;
+  padding: 0 8px;
   font-size: 10px;
   scroll-behavior: smooth;
 }
