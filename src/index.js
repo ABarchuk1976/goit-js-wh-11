@@ -150,10 +150,10 @@ formRef.addEventListener('submit', event => {
       Notiflix.Notify.success(`Hooray! We found ${totalAmount} images.`);
 
       console.log(
-        'Bodi ',
-        document.body.clientHeight,
-        'Client ',
-        document.documentElement.clientHeight
+        'Scroll ',
+        document.documentElement.scrollTop,
+        ' ',
+        document.documentElement.scrollLeft
       );
 
       if (document.body.clientHeight <= document.documentElement.clientHeight) {
