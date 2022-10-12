@@ -151,7 +151,7 @@ formRef.addEventListener('submit', event => {
 
       Notiflix.Notify.success(`Hooray! We found ${totalAmount} images.`);
 
-      if (totalAmount < 41) {
+      if (document.body.clientHeight === document.documentElement.clientHeight) {
         Notiflix.Notify.info("We're sorry, but you've reached the end of search results.");
         searchEnded = true;
       }
@@ -187,8 +187,8 @@ window.addEventListener(
     const hundredPxToBottom = document.documentElement.clientHeight + 100;
     const toBottomOfDoc = event.target.documentElement.getBoundingClientRect().bottom;
 
-    if (toBottomOfDoc < hundredPxToBottom) {
-      if (pagesCount === currentPage && !searchEnded) {
+    if (toBottomOfDoc < hundredPxToBottom && !searchEnded) {
+      if (pagesCount === currentPage) {
         Notiflix.Notify.info("We're sorry, but you've reached the end of search results.");
         searchEnded = true;
         return;
