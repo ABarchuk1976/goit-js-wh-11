@@ -65,8 +65,6 @@ async function getGallery() {
 
     const response = await axios.get(`${API}?${searchParams}`);
 
-    console.log(response.status);
-
     if (response.status !== 200) {
       throw new Error(response.status);
     }
@@ -151,15 +149,20 @@ formRef.addEventListener('submit', event => {
 
       Notiflix.Notify.success(`Hooray! We found ${totalAmount} images.`);
 
-      if (document.body.clientHeight === document.documentElement.clientHeight) {
+      console.log(
+        'Bodi ',
+        document.body.clientHeight,
+        'Client ',
+        document.documentElement.clientHeight
+      );
+
+      if (document.body.clientHeight <= document.documentElement.clientHeight) {
         Notiflix.Notify.info("We're sorry, but you've reached the end of search results.");
         searchEnded = true;
       }
 
       pagesCount = Math.trunc(totalAmount / PER_PAGE);
       if (totalAmount % PER_PAGE !== 0) pagesCount += 1;
-
-      console.log('Pages count: ', pagesCount);
 
       renderImages(images);
     })
