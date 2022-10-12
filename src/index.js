@@ -16,6 +16,9 @@ const ORIENTATION = 'horizontal';
 const SAFESEARCH = true;
 const API = 'https://pixabay.com/api/';
 const PER_PAGE = 40;
+const GAP = 16;
+const HEIGHT_FORM = 36;
+const UP_TO_GALLERY = HEIGHT_FORM + GAP;
 
 let currentPage = 1;
 let pagesCount = 1;
@@ -68,6 +71,16 @@ async function getGallery() {
     if (response.status !== 200) {
       throw new Error(response.status);
     }
+    const data = response.data;
+
+    const { hits: images, totalHits: totalAmount } = data;
+    if (images.length === 0) {
+      searchEnded = true;
+      throw new Error('Sorry, there are no images matching your search query. Please try again.');
+    }
+
+    Notiflix.Notify.success(`Hooray! We found ${totalAmount} images.`);
+
     return response.data;
   } catch (error) {
     Notiflix.Notify.failure(error.message);
@@ -119,6 +132,7 @@ function renderImages(images) {
     .join('');
 
   galleryRef.insertAdjacentHTML('beforeend', galleryMarkup);
+
   lightbox.refresh();
 }
 
@@ -153,12 +167,25 @@ formRef.addEventListener('submit', event => {
       if (totalAmount % PER_PAGE !== 0) pagesCount += 1;
 
       renderImages(images);
+    })
+    .then(() => {
+      const galleryItemRef = document.querySelector('.gallery__item');
 
-      document.body.refresh;
+      console.log(
+        document.body.clientHeight,
+        ' ',
+        'pages ',
+        pagesCount,
+        ' ',
+        galleryItemRef.clientHeight * pagesCount + UP_TO_GALLERY,
+        ' ',
+        document.documentElement.clientHeight
+      );
 
-      console.log(document.body.offsetHeight);
-
-      if (document.documentElement.clientWidth > document.body.clientHeight) {
+      if (
+        galleryItemRef.clientHeight * pagesCount + UP_TO_GALLERY <
+        document.documentElement.clientHeight
+      ) {
         Notiflix.Notify.info("We're sorry, but you've reached the end of search results.");
         searchEnded = true;
       }

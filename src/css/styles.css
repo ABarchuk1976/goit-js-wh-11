@@ -4,7 +4,6 @@
 
 img {
   display: block;
-  object-fit: cover;
 }
 
 a {
@@ -21,7 +20,8 @@ body {
   color: #212121;
   line-height: 1.5;
   margin: 0;
-  padding: 0 8px;
+  margin-top: 52px;
+  padding: 16px 8px;
   font-size: 10px;
   scroll-behavior: smooth;
 }
@@ -41,7 +41,6 @@ body {
 }
 
 .gallery {
-  margin-top: 60px;
   display: flex;
   flex-wrap: wrap;
   margin-right: -16px;
