@@ -152,6 +152,7 @@ function renderImages(images) {
     )
     .join('');
 
+  galleryRef.setHTML('');
   galleryRef.insertAdjacentHTML('beforeend', galleryMarkup);
 
   lightbox.refresh();
