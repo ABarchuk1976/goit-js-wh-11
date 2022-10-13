@@ -22,7 +22,8 @@ const UP_TO_GALLERY = HEIGHT_FORM + GAP;
 
 let currentPage = 1;
 let pagesCount = 1;
-let searchEnded = false;
+let searchEnded = false; // search finished
+let firstAsk = false; // used at windows.onload only to know that window scrollbar was rendered, becouse I have problem with Element.clientHeight have wrong value when DOM don't fully loaded
 
 const galleryRef = document.querySelector('.gallery');
 const lightbox = new SimpleLightbox('.gallery__item', {
@@ -62,21 +63,11 @@ const debouncedScroll = _.debounce(() => {
     behavior: 'smooth',
   });
 }, 1500);
-
+// to know we reach bottom befor pxToBottom pxs
 function chackBottom(pxToBottom) {
   const toBottom = document.documentElement.clientHeight + pxToBottom;
   const toBottomOfDoc = document.documentElement.getBoundingClientRect().bottom;
 
-  console.log(
-    'toBottom ',
-    toBottom,
-    ' toBottomOfDoc ',
-    toBottomOfDoc,
-    ' pagesCount ',
-    pagesCount,
-    ' currentPage ',
-    currentPage
-  );
   if (toBottomOfDoc < toBottom && !searchEnded) {
     return true;
   }
@@ -152,7 +143,6 @@ function renderImages(images) {
     )
     .join('');
 
-  galleryRef.setHTML('');
   galleryRef.insertAdjacentHTML('beforeend', galleryMarkup);
 
   lightbox.refresh();
@@ -169,11 +159,12 @@ searchQuery.addEventListener('input', event => {
 formRef.addEventListener('submit', event => {
   event.preventDefault();
 
-  galleryRef.setHTML('');
+  galleryRef.setHTML(''); // better then innerHTML = '';
 
   pagesCount = 1;
   currentPage = 1;
   searchEnded = false;
+  firstAsk = true;
   document.removeEventListener('scroll', debouncedScroll);
 
   getGallery()
@@ -190,15 +181,19 @@ formRef.addEventListener('submit', event => {
       if (totalAmount % PER_PAGE !== 0) pagesCount += 1;
 
       renderImages(images);
-
-      if (chackBottom(0) && pagesCount === currentPage) {
-        Notiflix.Notify.info("We're sorry, but you've reached the end of search results.");
-        searchEnded = true;
-      }
     })
     .catch(error => {
       Notiflix.Notify.failure(error.message);
     });
+});
+// need to analize only if we have not scroll event
+window.addEventListener('load', () => {
+  if (firstAsk && !searchEnded) {
+    if (chackBottom(0) && pagesCount === currentPage) {
+      Notiflix.Notify.info("We're sorry, but you've reached the end of search results.");
+      firstAsk = false;
+    }
+  }
 });
 
 window.addEventListener('scroll', debouncedScroll);
@@ -209,6 +204,7 @@ document.addEventListener(
     if (!chackBottom(100)) return;
 
     if (pagesCount !== currentPage) {
+      firstAsk = false;
       currentPage += 1;
 
       getGallery().then(response => {
